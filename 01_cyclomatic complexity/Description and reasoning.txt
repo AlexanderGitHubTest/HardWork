@@ -1,0 +1,88 @@
+0. Отчет по заданию.
+
+Познакомился с понятием "цикломатическая сложность". Понял, как её считать (в нескольких вариантах: напрямую, по формуле или модулем radon). Получается немного по разному. Например, формула (и модуль) не учитывают блок else. Для подсчета ЦС воспользовался модулем radon (pip install radon). (Документация https://radon.readthedocs.io/en/latest/commandline.html#the-cc-command). 
+
+На практике сначала попробовал способы попроще: просто убирание else, разбиение на классы и функции/методы, использование функционального программирования. Также попробовал ad hoc полиморфизм. Это получилось сложнее, так как исходная программа была вообще без классов. Попытался даже АТД сделать, а потом уже класс на его основе. Еще получилось табличный способ попробовать, но не для ввода из формы, а для проверки содержимого URL в views в Django. Автомат состояний, генерики, движение в сторону ФП, "Прокачку в ООП" и DSL оставил на будущее.
+
+Общий вывод - сильно улучшилась читаемость программ. Взял путанные части, со всеми пришлось долго разбираться, чтобы просто понять, что происходит в коде. А после оптимизации отлаживать было очень быстро и приятно. Еще проявился "эффект ремонта": захотелось оптимизировать дальше, так как стало всё стройнее и понятнее, но ограничился рамками задания. И ещё в блог написал про ЦС :)
+
+=========================================================
+
+1. Файл create_report_old.py -> create_report_new.py  (полностью модуль в файлах)
+Исходное: https://github.com/AlexanderGitHubTest/HardWork/blob/main/01_cyclomatic%20complexity/create_report_old.py
+Рефакторинг: https://github.com/AlexanderGitHubTest/HardWork/blob/main/01_cyclomatic%20complexity/create_report_new.py
+=========================================================
+Исходное (получено командой radon cc -s <имя модуля>):
+    F 29:0 query_to_xlsx - B (6)
+    F 58:0 main - C (19)
+Исходная ЦС была даже не 19, а 20, так как функция main была не функцией, а блоком внутри 'if __name__ == "__main__"'.
+В функции множественное вложение for, if, а также много else.
+
+Результат:
+    F 60:0 fill_cell - B (7)
+    F 147:0 main - B (7)
+    F 29:0 query_to_xlsx - B (6)
+    F 100:0 add_thin_borders - A (3)
+    F 124:0 setting_width_of_columns - A (2)
+    F 135:0 format_period_names - A (2)
+
+Сокращение ЦС с 20 до 7.
+Использовал способы:
+1) Воспользовался функциональным программированием (filter, map).
+2) Вынос кода в отдельные функции.
+==========================================================
+
+2. Файл pdf_parsing_new_old.py -> pdf_parsing_new_new.py (полностью модуль в файлах)
+Исходное: https://github.com/AlexanderGitHubTest/HardWork/blob/main/01_cyclomatic%20complexity/pdf_parsing_new_old.py
+Рефакторинг: https://github.com/AlexanderGitHubTest/HardWork/blob/main/01_cyclomatic%20complexity/pdf_parsing_new_new.py
+==========================================================
+Исходные значения:
+    F 127:0 agprior_searching - C (17)
+    F 33:0 check_for_line_in_block_onetime_charges - B (8)
+    F 71:0 stream_decoding - B (7)
+    F 49:0 pdfrw_read - A (2)
+Буду изменять функцию agprior_searching
+
+После изменений (функцию переименовал, теперь она называется search_table_rows)
+    M 253:4 TableOneTimeChargesRow._is_table_row - B (8)
+    F 46:0 stream_decoding - B (7)
+    F 283:0 search_table_rows - B (6)
+    M 171:4 TableRow.put - A (4)
+    C 232:0 TableOneTimeChargesRow - A (4)
+    M 184:4 TableRow.get_row - A (3)
+    F 24:0 pdfrw_read - A (2)
+    C 90:0 TableRow - A (2)
+    C 196:0 TableAgpriorRow - A (2)
+    M 226:4 TableAgpriorRow._is_table_row - A (2)
+    M 138:4 TableRow._maxlen - A (1)
+    M 146:4 TableRow._create_dict - A (1)
+    M 151:4 TableRow._is_table_row - A (1)
+    M 163:4 TableRow.__init__ - A (1)
+    M 192:4 TableRow.get_get_row_status - A (1)
+    M 202:4 TableAgpriorRow._maxlen - A (1)
+    M 205:4 TableAgpriorRow._create_dict - A (1)
+    M 238:4 TableOneTimeChargesRow._maxlen - A (1)
+    M 241:4 TableOneTimeChargesRow._create_dict - A (1)
+
+Сокращение ЦС с 17 до 6.
+Использовал:
+1) Ad Hoc полиморфизм (методы с одним названием имеют разное поведение в зависимости от вызывающего класса).
+2) Разделение исходной функции на классы/функции/методы (заодно в один из классов инкапсулировал с глобального уровня
+отдельную функцию, которую вызывала только одна функция).
+==========================================================
+
+
+3. Файл views_old.py -> views_new.py (только класс в файлах)
+Исходное: https://github.com/AlexanderGitHubTest/HardWork/blob/main/01_cyclomatic%20complexity/views_old.py
+Рефакторинг: https://github.com/AlexanderGitHubTest/HardWork/blob/main/01_cyclomatic%20complexity/views_new.py
+==========================================================
+Исходные значения:
+    M 587:4 ReportCheckInputDataCreateListUpdateRetrieve.check_data - B (8)
+
+Получилось:
+    M 587:4 ReportCheckInputDataCreateListUpdateRetrieve.check_data - A (3)
+
+Сокращение ЦС с 8 до 3. 
+Использовал:
+1) Паттерн "табличной" логики.
+2) Выделение в исходном методе на функций.
